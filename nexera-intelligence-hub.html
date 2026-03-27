@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexera Intelligence Hub</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f4f0; }
+
+  .hub-header {
+    background: #0D2340;
+    padding: 20px 24px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid #C9A84C;
+  }
+  .hub-logo { display: flex; align-items: center; gap: 10px; }
+  .hub-logo-mark {
+    width: 36px; height: 36px; border-radius: 6px;
+    background: #C9A84C;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 600; color: #0D2340;
+  }
+  .hub-logo-text { color: #fff; font-size: 15px; font-weight: 600; }
+  .hub-logo-sub { color: #C9A84C; font-size: 11px; letter-spacing: 0.08em; }
+  .hub-meta { color: rgba(255,255,255,0.5); font-size: 12px; text-align: right; }
+  .hub-meta strong { color: #C9A84C; display: block; font-size: 13px; }
+
+  .hub-body { display: flex; min-height: calc(100vh - 72px); }
+
+  .sidebar {
+    width: 200px;
+    min-width: 200px;
+    background: #0D2340;
+    padding: 16px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .sidebar-label {
+    color: rgba(255,255,255,0.35);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    padding: 8px 16px 4px;
+    text-transform: uppercase;
+  }
+  .role-btn {
+    display: flex; align-items: center; gap: 8px;
+    padding: 9px 16px;
+    cursor: pointer;
+    border: none; background: transparent;
+    text-align: left; width: 100%;
+    border-left: 3px solid transparent;
+    transition: all 0.15s;
+    color: rgba(255,255,255,0.55);
+    font-size: 12px;
+    font-family: inherit;
+  }
+  .role-btn:hover { background: rgba(201,168,76,0.08); color: #fff; }
+  .role-btn.active { background: rgba(201,168,76,0.12); border-left-color: #C9A84C; color: #fff; }
+  .role-icon { font-size: 14px; width: 18px; text-align: center; }
+  .role-count {
+    margin-left: auto;
+    background: rgba(201,168,76,0.2);
+    color: #C9A84C;
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 10px;
+  }
+
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  .toolbar {
+    background: #fff;
+    border-bottom: 1px solid #e5e3dc;
+    padding: 10px 20px;
+    display: flex; align-items: center; gap: 10px;
+    flex-wrap: wrap;
+  }
+  .toolbar-title { font-size: 14px; font-weight: 600; color: #1a1a1a; flex: 1; }
+  .tab-btn {
+    padding: 5px 12px;
+    border: 1px solid #e5e3dc;
+    border-radius: 20px;
+    background: transparent;
+    font-size: 12px;
+    cursor: pointer;
+    color: #666;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .tab-btn:hover { background: #f5f4f0; }
+  .tab-btn.active { background: #0D2340; color: #C9A84C; border-color: #0D2340; }
+
+  .content-area {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 0;
+    overflow: hidden;
+    height: calc(100vh - 72px - 48px);
+  }
+
+  .articles-panel { padding: 16px 20px; overflow-y: auto; background: #f5f4f0; }
+  .articles-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .articles-header h3 { font-size: 13px; font-weight: 500; color: #666; }
+  .sort-select {
+    font-size: 11px;
+    border: 1px solid #e5e3dc;
+    border-radius: 4px;
+    padding: 3px 6px;
+    background: #fff;
+    color: #666;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .article-card {
+    background: #fff;
+    border: 1px solid #e5e3dc;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .article-card:hover { border-color: #bbb; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+  .article-card.selected { border-color: #0D2340; border-width: 2px; }
+
+  .article-top { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+  .article-score {
+    min-width: 42px; height: 42px;
+    border-radius: 8px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 600;
+    flex-shrink: 0;
+  }
+  .score-high { background: #EAF3DE; color: #3B6D11; }
+  .score-med { background: #FAEEDA; color: #854F0B; }
+  .score-low { background: #f1f0eb; color: #666; }
+  .score-label { font-size: 8px; font-weight: 400; opacity: 0.7; }
+
+  .article-title { font-size: 13px; font-weight: 600; color: #1a1a1a; line-height: 1.4; }
+  .article-summary { font-size: 12px; color: #555; line-height: 1.5; margin-bottom: 8px; }
+  .article-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .source-badge {
+    font-size: 10px; padding: 2px 7px;
+    border-radius: 10px;
+    background: #E6F1FB; color: #185FA5;
+    font-weight: 500;
+  }
+  .cross-badge {
+    font-size: 10px; padding: 2px 7px;
+    border-radius: 10px;
+    background: #EAF3DE; color: #3B6D11;
+    font-weight: 500;
+  }
+  .article-date { font-size: 10px; color: #999; margin-left: auto; }
+  .article-link { font-size: 11px; color: #185FA5; text-decoration: none; margin-left: auto; }
+  .article-link:hover { text-decoration: underline; }
+
+  .right-panel {
+    border-left: 1px solid #e5e3dc;
+    background: #fff;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+
+  .panel-tabs {
+    display: flex;
+    border-bottom: 1px solid #e5e3dc;
+    background: #f5f4f0;
+  }
+  .panel-tab {
+    flex: 1; padding: 10px 8px;
+    font-size: 11px; text-align: center;
+    cursor: pointer; border: none; background: transparent;
+    color: #666;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .panel-tab.active { color: #1a1a1a; border-bottom-color: #C9A84C; background: #fff; }
+
+  .panel-content { flex: 1; overflow-y: auto; padding: 16px; }
+
+  .generate-btn {
+    width: 100%;
+    padding: 10px;
+    background: #0D2340;
+    color: #C9A84C;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 8px;
+    transition: opacity 0.15s;
+    font-family: inherit;
+    text-align: left;
+  }
+  .generate-btn:hover { opacity: 0.85; }
+  .generate-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .generate-btn.secondary {
+    background: transparent;
+    border: 1px solid #e5e3dc;
+    color: #1a1a1a;
+  }
+
+  .output-box {
+    background: #f5f4f0;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 12px;
+    line-height: 1.6;
+    color: #1a1a1a;
+    margin-bottom: 10px;
+    min-height: 80px;
+    border: 1px solid #e5e3dc;
+  }
+
+  .trend-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0ede6;
+  }
+  .trend-rank { font-size: 11px; color: #999; min-width: 16px; }
+  .trend-topic { font-size: 12px; color: #1a1a1a; flex: 1; }
+  .trend-bar-wrap { width: 60px; height: 6px; background: #f0ede6; border-radius: 3px; }
+  .trend-bar { height: 6px; border-radius: 3px; background: #C9A84C; }
+  .trend-count { font-size: 10px; color: #666; min-width: 28px; text-align: right; }
+
+  .metric-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .metric-card {
+    background: #f5f4f0;
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .metric-label { font-size: 10px; color: #666; margin-bottom: 4px; }
+  .metric-value { font-size: 20px; font-weight: 600; color: #1a1a1a; }
+  .metric-sub { font-size: 10px; color: #3B6D11; }
+
+  .newsletter-section { margin-bottom: 14px; }
+  .newsletter-section h4 { font-size: 11px; font-weight: 600; color: #666; margin-bottom: 6px; letter-spacing: 0.05em; text-transform: uppercase; }
+
+  .status-bar {
+    background: #0D2340;
+    padding: 6px 20px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    display: flex; gap: 16px;
+  }
+  .status-bar span { color: #C9A84C; }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #999;
+    font-size: 13px;
+  }
+  .empty-state .icon { font-size: 32px; margin-bottom: 8px; }
+
+  /* Loading spinner */
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #C9A84C; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="hub-header">
+  <div class="hub-logo">
+    <div class="hub-logo-mark">N</div>
+    <div>
+      <div class="hub-logo-text">Nexera Intelligence Hub</div>
+      <div class="hub-logo-sub">AI POWERED. HUMAN DRIVEN.</div>
+    </div>
+  </div>
+  <div class="hub-meta">
+    <strong id="today-date">Loading...</strong>
+    <span id="article-stats">Loading articles...</span>
+  </div>
+</div>
+
+<div class="hub-body">
+  <div class="sidebar">
+    <div class="sidebar-label">BuffSci / RocSci</div>
+    <button class="role-btn active" onclick="setRole(this,'all')"><span class="role-icon">◈</span> All Staff <span class="role-count" id="count-all">—</span></button>
+    <button class="role-btn" onclick="setRole(this,'principal')"><span class="role-icon">▲</span> Principals & APs <span class="role-count" id="count-principal">—</span></button>
+    <button class="role-btn" onclick="setRole(this,'coach')"><span class="role-icon">◎</span> Academic Coaches <span class="role-count" id="count-coach">—</span></button>
+    <button class="role-btn" onclick="setRole(this,'teacher')"><span class="role-icon">✦</span> Teachers <span class="role-count" id="count-teacher">—</span></button>
+    <button class="role-btn" onclick="setRole(this,'edtech')"><span class="role-icon">⬡</span> Ed Tech Teachers <span class="role-count" id="count-edtech">—</span></button>
+    <button class="role-btn" onclick="setRole(this,'sel')"><span class="role-icon">◇</span> Social Workers / Counselors <span class="role-count" id="count-sel">—</span></button>
+    <button class="role-btn" onclick="setRole(this,'it')"><span class="role-icon">⬢</span> IT Team <span class="role-count" id="count-it">—</span></button>
+    <button class="role-btn" onclick="setRole(this,'hr')"><span class="role-icon">◉</span> HR & Finance <span class="role-count" id="count-hr">—</span></button>
+    <button class="role-btn" onclick="setRole(this,'district')"><span class="role-icon">▣</span> District Office <span class="role-count" id="count-district">—</span></button>
+    <div class="sidebar-label" style="margin-top:8px;">Nexera / New Era</div>
+    <button class="role-btn" onclick="setRole(this,'nexera')"><span class="role-icon">★</span> Nexera Clients <span class="role-count" id="count-nexera">—</span></button>
+    <button class="role-btn" onclick="setRole(this,'newera')"><span class="role-icon">◆</span> New Era Clients <span class="role-count" id="count-newera">—</span></button>
+  </div>
+
+  <div class="main">
+    <div class="toolbar">
+      <div class="toolbar-title" id="role-title">All Staff — Today's Top Stories</div>
+      <button class="tab-btn active" onclick="setView(this,'articles')">Articles</button>
+      <button class="tab-btn" onclick="setView(this,'trends')">Trends</button>
+      <button class="tab-btn" onclick="setView(this,'newsletter')">Newsletter</button>
+      <button class="tab-btn secondary" onclick="loadCSV()" style="margin-left:auto; border-color:#C9A84C; color:#0D2340; font-weight:600;">⟳ Refresh Data</button>
+    </div>
+
+    <div class="content-area">
+      <!-- Articles View -->
+      <div class="articles-panel" id="articles-view">
+        <div class="articles-header">
+          <h3 id="article-count-label">Loading...</h3>
+          <select class="sort-select" onchange="sortArticles(this.value)">
+            <option value="score">Sort: Relevance</option>
+            <option value="date">Sort: Date</option>
+            <option value="source">Sort: Source</option>
+          </select>
+        </div>
+        <div id="article-list">
+          <div class="empty-state"><div class="icon">📰</div>Loading articles from news_index.csv...</div>
+        </div>
+      </div>
+
+      <!-- Trends View -->
+      <div class="articles-panel" id="trends-view" style="display:none;">
+        <div class="metric-row">
+          <div class="metric-card"><div class="metric-label">Articles indexed</div><div class="metric-value" id="m-total">—</div><div class="metric-sub">all time</div></div>
+          <div class="metric-card"><div class="metric-label">Cross-referenced</div><div class="metric-value" id="m-cross">—</div><div class="metric-sub" id="m-cross-pct">—</div></div>
+          <div class="metric-card"><div class="metric-label">Top source</div><div class="metric-value" id="m-topsource" style="font-size:13px;">—</div><div class="metric-sub" id="m-topsource-count">—</div></div>
+          <div class="metric-card"><div class="metric-label">Avg score</div><div class="metric-value" id="m-avgscore">—</div><div class="metric-sub">relevance</div></div>
+        </div>
+        <h4 style="font-size:12px; font-weight:600; color:#666; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.05em;">Trending topics</h4>
+        <div id="trend-list"></div>
+      </div>
+
+      <!-- Newsletter View -->
+      <div class="articles-panel" id="newsletter-view" style="display:none;">
+        <div class="newsletter-section">
+          <h4>Weekly Nexera AI Newsletter</h4>
+          <p style="font-size:12px; color:#666; margin-bottom:8px; line-height:1.5;">Auto-draft from this week's top trending K-12 AI stories. Uses your Writing DNA voice.</p>
+          <button class="generate-btn" onclick="copyPrompt('newsletter')">📋 Copy newsletter prompt</button>
+        </div>
+        <div class="newsletter-section">
+          <h4>LinkedIn Post</h4>
+          <button class="generate-btn" onclick="copyPrompt('linkedin')">📋 Copy LinkedIn prompt</button>
+        </div>
+        <div class="newsletter-section">
+          <h4>Infographic Copy</h4>
+          <button class="generate-btn" onclick="copyPrompt('infographic')">📋 Copy infographic prompt</button>
+        </div>
+        <div class="newsletter-section">
+          <h4>PD / Course Material Snippet</h4>
+          <button class="generate-btn" onclick="copyPrompt('pd')">📋 Copy PD prompt</button>
+        </div>
+        <div class="newsletter-section">
+          <h4>Leadership Trend Report</h4>
+          <button class="generate-btn secondary" onclick="copyPrompt('leadership')">📋 Copy leadership report prompt</button>
+        </div>
+        <div id="copy-confirm" style="display:none; background:#EAF3DE; color:#3B6D11; padding:8px 12px; border-radius:8px; font-size:12px; margin-top:8px;">✓ Prompt copied to clipboard — paste into Claude chat</div>
+      </div>
+
+      <!-- Right Panel -->
+      <div class="right-panel">
+        <div class="panel-tabs">
+          <button class="panel-tab active" onclick="setPanelTab(this,'generate')">Generate</button>
+          <button class="panel-tab" onclick="setPanelTab(this,'preview')">Preview</button>
+        </div>
+
+        <div class="panel-content" id="generate-panel">
+          <div style="margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid #f0ede6;">
+            <div style="font-size:11px; color:#999; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.05em;">Selected article</div>
+            <div style="font-size:12px; color:#999; font-style:italic;" id="selected-title">Click any article to select it</div>
+          </div>
+          <button class="generate-btn" id="linkedin-btn" onclick="copyArticlePrompt('linkedin')" disabled>📋 LinkedIn post</button>
+          <button class="generate-btn" id="infographic-btn" onclick="copyArticlePrompt('infographic')" disabled>📋 Infographic copy</button>
+          <button class="generate-btn" id="pd-btn" onclick="copyArticlePrompt('pd')" disabled>📋 PD snippet</button>
+          <button class="generate-btn secondary" id="trend-btn" onclick="copyArticlePrompt('trend')" disabled>📋 Add to trend report</button>
+          <div style="margin-top:14px;">
+            <div style="font-size:11px; color:#999; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.05em;">Output</div>
+            <div class="output-box" id="output-preview" style="color:#999; font-style:italic;">Select an article then choose an output type above. Prompt copies to clipboard — paste into Claude.</div>
+          </div>
+          <div id="article-copy-confirm" style="display:none; background:#EAF3DE; color:#3B6D11; padding:8px 12px; border-radius:8px; font-size:12px; margin-top:8px;">✓ Prompt copied — paste into Claude chat</div>
+        </div>
+
+        <div class="panel-content" id="preview-panel" style="display:none;">
+          <div style="font-size:11px; color:#999; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.05em;">Article detail</div>
+          <div id="article-detail" style="color:#999; font-size:12px; font-style:italic;">Select an article to preview</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="status-bar">
+  <span id="status-csv">Data source: news_index.csv</span>
+  <span id="status-last-run">Last run: checking...</span>
+  <span id="status-mode">Mode: standalone HTML</span>
+</div>
+
+<script>
+// ============================================================
+// CONFIGURATION — update these to match your setup
+// ============================================================
+const CONFIG = {
+  // Path to your news_index.csv file
+  // When running locally: use relative path './news_index.csv'
+  // When hosted on website: use full URL 'https://nexeraleadership.com/data/news_index.csv'
+  CSV_PATH: './news_index.csv',
+
+  // Role keyword mapping — articles are tagged based on these keywords
+  ROLE_KEYWORDS: {
+    principal:  ['policy','leadership','framework','legislation','principal','administrator','state','district','school leader','charter'],
+    coach:      ['coaching','instructional','personalized','feedback','assessment','differentiat','curriculum','academic','learning design'],
+    teacher:    ['teacher','classroom','lesson','burnout','tutoring','grading','instruction','pedagogy','student learning','practice'],
+    edtech:     ['platform','tool','google','microsoft','infrastructure','device','lms','canvas','schoology','edtech','technology'],
+    sel:        ['sel','social emotional','mental health','wellbeing','counselor','social worker','ethical','equity','family'],
+    it:         ['infrastructure','security','network','data privacy','deployment','it team','device management','cloud','cybersecurity'],
+    hr:         ['workforce','job','hiring','salary','compensation','hr','finance','budget','staffing','career','displaced'],
+    district:   ['district','state','legislation','bill','policy','nsf','caep','regulation','governance','compliance'],
+    nexera:     ['leadership','charter renewal','coaching','organizational','strategy','transformation','development','executive'],
+    newera:     ['talent','workforce','ai literacy','career','upskill','professional development','training','job forecast','hybrid role']
+  }
+};
+
+// ============================================================
+// DATA LAYER — reads from news_index.csv
+// ============================================================
+let ALL_ARTICLES = [];
+let FILTERED_ARTICLES = [];
+let selectedArticle = null;
+let currentRole = 'all';
+
+function tagArticleRoles(article) {
+  const text = (article.title + ' ' + (article.summary || '') + ' ' + (article.source || '')).toLowerCase();
+  const roles = ['all'];
+  for (const [role, keywords] of Object.entries(CONFIG.ROLE_KEYWORDS)) {
+    if (keywords.some(kw => text.includes(kw))) roles.push(role);
+  }
+  if (roles.length === 1) roles.push('principal','teacher'); // fallback
+  return roles;
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(',').map(h => h.trim().replace(/"/g,''));
+  return lines.slice(1).map((line, idx) => {
+    // Handle commas inside quoted fields
+    const cols = [];
+    let cur = ''; let inQ = false;
+    for (let c of line) {
+      if (c === '"') { inQ = !inQ; }
+      else if (c === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
+      else { cur += c; }
+    }
+    cols.push(cur.trim());
+    const obj = {};
+    headers.forEach((h,i) => obj[h] = (cols[i]||'').replace(/^"|"$/g,''));
+    obj.id = idx + 1;
+    obj.score = parseFloat(obj.relevance_score) || 0;
+    obj.cross = obj.cross_referenced === 'yes' || obj.cross_referenced === 'True';
+    obj.roles = tagArticleRoles(obj);
+    obj.summary = obj.summary || obj.title;
+    return obj;
+  }).filter(a => a.title);
+}
+
+async function loadCSV() {
+  document.getElementById('article-list').innerHTML = '<div class="empty-state"><div class="spinner" style="width:24px;height:24px;margin:0 auto 8px;"></div><div>Loading articles...</div></div>';
+  try {
+    const res = await fetch(CONFIG.CSV_PATH + '?t=' + Date.now());
+    if (!res.ok) throw new Error('CSV not found at ' + CONFIG.CSV_PATH);
+    const text = await res.text();
+    ALL_ARTICLES = parseCSV(text);
+    if (ALL_ARTICLES.length === 0) throw new Error('No articles found in CSV');
+    updateMetrics();
+    updateCounts();
+    setRole(document.querySelector('.role-btn.active'), currentRole);
+    document.getElementById('status-csv').textContent = '✓ Data source: news_index.csv (' + ALL_ARTICLES.length + ' articles total)';
+    const dates = ALL_ARTICLES.map(a => a.date).filter(Boolean);
+    if (dates.length) document.getElementById('status-last-run').textContent = 'Last article: ' + dates[0];
+  } catch(e) {
+    // Fall back to sample data
+    loadSampleData();
+    document.getElementById('status-csv').textContent = '⚠ CSV not found — showing sample data. Connect news_index.csv to see live data.';
+    document.getElementById('status-mode').textContent = 'Mode: sample data';
+  }
+}
+
+function loadSampleData() {
+  ALL_ARTICLES = [
+    { id:1, title:"AI Tools Support Personalized Learning at Scale", source:"EdSurge", summary:"New research shows AI-powered tutoring tools are delivering measurable gains in math and reading across K-12 classrooms, with districts reporting 23% improvement in differentiated instruction.", score:57.4, cross:true, date:"2026-03-25", url:"#", roles:["all","teacher","coach","principal","nexera","newera"] },
+    { id:2, title:"Statewide AI Frameworks: Idaho and West Virginia Lead the Way", source:"Education Week", summary:"Two states have finalized K-12 AI guidelines covering ethical use, student data privacy, and teacher training requirements — signaling a national policy shift.", score:51.2, cross:true, date:"2026-03-25", url:"#", roles:["all","principal","district","nexera"] },
+    { id:3, title:"NSF Awards $11M for Teacher AI Professional Development", source:"THE Journal", summary:"The National Science Foundation is funding AI PD Weeks targeting 50,000 teachers nationwide, with emphasis on rural and urban under-resourced districts.", score:48.6, cross:true, date:"2026-03-25", url:"#", roles:["all","principal","coach","hr","nexera","newera"] },
+    { id:4, title:"AI as Teacher's Assistant: Reducing Burnout, Boosting Capacity", source:"eSchool News", summary:"Districts piloting AI grading and feedback tools report teachers reclaiming 4–6 hours per week — redirecting time toward relationship-building and coaching.", score:45.1, cross:true, date:"2026-03-25", url:"#", roles:["all","teacher","coach","sel"] },
+    { id:5, title:"Fastest-Growing AI Jobs 2026: What K-12 Students Need to Know", source:"K-12 Dive", summary:"AI Engineer roles up 143%, with new hybrid positions like AI Literacy Lead and AI Ethics Compliance Officer emerging as critical workforce needs.", score:44.3, cross:true, date:"2026-03-25", url:"#", roles:["all","teacher","district","hr","newera"] },
+    { id:6, title:"Google Gemini 2.5 Pro Integrates into Workspace for Education", source:"EdTech Magazine", summary:"Google's latest AI model is now embedded across Google Classroom, Docs, and Forms — offering real-time writing feedback and lesson scaffolding for teachers.", score:41.0, cross:true, date:"2026-03-25", url:"#", roles:["all","edtech","it","teacher"] },
+    { id:7, title:"AI Translation Tools Breaking Language Barriers in 250+ Languages", source:"Getting Smart", summary:"Schools serving multilingual families are deploying AI translation tools for parent communication, IEP meetings, and student support — dramatically improving equity outcomes.", score:38.2, cross:false, date:"2026-03-25", url:"#", roles:["all","sel","principal","district"] },
+    { id:8, title:"FutureEd Tracks 52 Bills Regulating AI in K-12 Classrooms", source:"Common Sense Media", summary:"Legislation is accelerating — 25 states have active bills covering AI use, student data, algorithmic bias, and teacher oversight requirements.", score:35.7, cross:false, date:"2026-03-25", url:"#", roles:["all","principal","district","hr"] },
+    { id:9, title:"Brookings Institution: Risks and Benefits of GenAI in Education", source:"Brookings", summary:"New research warns of equity gaps in AI tool access while highlighting strong evidence for AI-assisted formative assessment when implemented with fidelity.", score:33.4, cross:false, date:"2026-03-25", url:"#", roles:["all","coach","principal","nexera"] },
+    { id:10, title:"AI Infrastructure: Moving from Novelty to Daily Classroom Reality", source:"ISTE", summary:"ISTE's 2026 report documents the shift from pilot programs to embedded AI infrastructure — with network security, device management, and teacher readiness as top barriers.", score:29.1, cross:false, date:"2026-03-25", url:"#", roles:["all","it","edtech","principal"] }
+  ];
+  updateMetrics();
+  updateCounts();
+  setRole(document.querySelector('.role-btn.active'), currentRole);
+}
+
+function updateMetrics() {
+  const total = ALL_ARTICLES.length;
+  const crossed = ALL_ARTICLES.filter(a => a.cross).length;
+  const avg = total ? (ALL_ARTICLES.reduce((s,a) => s + a.score, 0) / total).toFixed(1) : 0;
+  const sources = {};
+  ALL_ARTICLES.forEach(a => { sources[a.source] = (sources[a.source]||0)+1; });
+  const topSource = Object.entries(sources).sort((a,b)=>b[1]-a[1])[0] || ['—',0];
+  document.getElementById('m-total').textContent = total;
+  document.getElementById('m-cross').textContent = crossed;
+  document.getElementById('m-cross-pct').textContent = total ? Math.round(crossed/total*100) + '% validation' : '';
+  document.getElementById('m-topsource').textContent = topSource[0];
+  document.getElementById('m-topsource-count').textContent = topSource[1] + ' articles';
+  document.getElementById('m-avgscore').textContent = avg;
+  document.getElementById('article-stats').textContent = total + ' articles · ' + crossed + ' cross-referenced';
+  document.getElementById('today-date').textContent = new Date().toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric', year:'numeric'});
+
+  // Trends
+  const keywords = ['personalized learning','policy','teacher burnout','workforce','professional development','infrastructure','equity','data privacy','AI literacy','charter','coaching'];
+  const trendData = keywords.map(kw => {
+    const count = ALL_ARTICLES.filter(a => (a.title+' '+(a.summary||'')).toLowerCase().includes(kw)).length;
+    return { topic: kw, count };
+  }).filter(t => t.count > 0).sort((a,b) => b.count - a.count).slice(0,8);
+  const maxCount = trendData[0]?.count || 1;
+  document.getElementById('trend-list').innerHTML = trendData.map((t,i) => `
+    <div class="trend-item">
+      <span class="trend-rank">${i+1}</span>
+      <span class="trend-topic">${t.topic}</span>
+      <div class="trend-bar-wrap"><div class="trend-bar" style="width:${Math.round(t.count/maxCount*100)}%"></div></div>
+      <span class="trend-count">${t.count} art.</span>
+    </div>`).join('');
+}
+
+function updateCounts() {
+  const roles = ['all','principal','coach','teacher','edtech','sel','it','hr','district','nexera','newera'];
+  roles.forEach(r => {
+    const el = document.getElementById('count-'+r);
+    if (el) el.textContent = ALL_ARTICLES.filter(a => a.roles.includes(r)).length;
+  });
+}
+
+function renderArticles(role, sortBy='score') {
+  const list = document.getElementById('article-list');
+  let filtered = ALL_ARTICLES.filter(a => a.roles.includes(role));
+  if (sortBy === 'score') filtered.sort((a,b) => b.score - a.score);
+  else if (sortBy === 'date') filtered.sort((a,b) => (b.date||'').localeCompare(a.date||''));
+  else if (sortBy === 'source') filtered.sort((a,b) => (a.source||'').localeCompare(b.source||''));
+  FILTERED_ARTICLES = filtered;
+  document.getElementById('article-count-label').textContent = filtered.length + ' articles · ranked by relevance';
+  if (!filtered.length) { list.innerHTML = '<div class="empty-state"><div class="icon">🔍</div>No articles for this role yet. More will appear as your briefing runs daily.</div>'; return; }
+  list.innerHTML = filtered.map(a => `
+    <div class="article-card ${selectedArticle && selectedArticle.id === a.id ? 'selected' : ''}" onclick="selectArticle(${a.id})">
+      <div class="article-top">
+        <div class="article-score ${a.score >= 50 ? 'score-high' : a.score >= 35 ? 'score-med' : 'score-low'}">
+          ${Math.round(a.score)}<div class="score-label">score</div>
+        </div>
+        <div class="article-title">${a.title}</div>
+      </div>
+      <div class="article-summary">${a.summary || ''}</div>
+      <div class="article-meta">
+        <span class="source-badge">${a.source || 'Unknown'}</span>
+        ${a.cross ? '<span class="cross-badge">cross-ref</span>' : ''}
+        ${a.url && a.url !== '#' ? `<a class="article-link" href="${a.url}" target="_blank" onclick="event.stopPropagation()">Read →</a>` : `<span class="article-date">${a.date || ''}</span>`}
+      </div>
+    </div>`).join('');
+}
+
+function selectArticle(id) {
+  selectedArticle = ALL_ARTICLES.find(a => a.id === id);
+  renderArticles(currentRole);
+  const t = document.getElementById('selected-title');
+  t.textContent = selectedArticle.title;
+  t.style.color = '#1a1a1a'; t.style.fontStyle = 'normal';
+  ['linkedin-btn','infographic-btn','pd-btn','trend-btn'].forEach(b => { document.getElementById(b).disabled = false; });
+  document.getElementById('article-detail').innerHTML = `
+    <div style="font-size:13px;font-weight:600;color:#1a1a1a;margin-bottom:8px;line-height:1.4;">${selectedArticle.title}</div>
+    <div style="font-size:12px;color:#555;margin-bottom:10px;line-height:1.5;">${selectedArticle.summary || ''}</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+      <span class="source-badge">${selectedArticle.source||'Unknown'}</span>
+      ${selectedArticle.cross ? '<span class="cross-badge">cross-referenced</span>' : ''}
+    </div>
+    <div style="font-size:11px;color:#999;">Relevance score: <strong style="color:#1a1a1a;">${Math.round(selectedArticle.score)}</strong></div>
+    ${selectedArticle.url && selectedArticle.url !== '#' ? `<a href="${selectedArticle.url}" target="_blank" style="display:inline-block;margin-top:10px;font-size:12px;color:#185FA5;">Read full article →</a>` : ''}`;
+}
+
+function sortArticles(val) { renderArticles(currentRole, val); }
+
+function setRole(btn, role) {
+  document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  currentRole = role;
+  const titles = {all:"All Staff — Today's Top Stories",principal:"Principals & APs — Leadership & Policy",coach:"Academic Coaches — Instruction & Learning",teacher:"Teachers — Classroom Tools & Practice",edtech:"Ed Tech Teachers — Platforms & Infrastructure",sel:"Social Workers & Counselors — SEL & Wellbeing",it:"IT Team — Infrastructure & Security",hr:"HR & Finance — Workforce & Operations",district:"District Office — Policy & Legislation",nexera:"Nexera Clients — Leadership Development",newera:"New Era Clients — AI Transformation"};
+  document.getElementById('role-title').textContent = titles[role] || role;
+  renderArticles(role);
+}
+
+function setView(btn, view) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  ['articles','trends','newsletter'].forEach(v => document.getElementById(v+'-view').style.display = v===view?'block':'none');
+}
+
+function setPanelTab(btn, tab) {
+  document.querySelectorAll('.panel-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('generate-panel').style.display = tab==='generate'?'block':'none';
+  document.getElementById('preview-panel').style.display = tab==='preview'?'block':'none';
+}
+
+const PROMPTS = {
+  newsletter: "Draft this week's Nexera AI Newsletter from the top trending K-12 AI education articles. Use Mustafa's Writing DNA voice — direct, warm, Gladwell structure. Include: top story, 3 key trends, job forecast insight, and a closing thought. Brand: Nexera Leadership Solutions. AI Powered. Human Driven.",
+  linkedin: "Write a LinkedIn post based on today's top AI-in-education story. Use Mustafa's Writing DNA — Gladwell structure, human/data hook, 150–200 words, branded footer: New Era Talent Development. AI Powered. Human Driven.",
+  infographic: "Create infographic copy from today's top AI education trends. Format: bold headline, 3 bullet insights (one sentence each), 1 key data point, CTA. Brand: Nexera / New Era. Navy, teal, gold palette.",
+  pd: "Turn today's top 3 AI education articles into a PD micro-module for BuffSci/RocSci teachers. Include: learning objective, 2-minute summary, 1 reflection question, 1 classroom application. Map to the Four Teacher Archetypes framework.",
+  leadership: "Generate a weekly AI trend report for BuffSci/RocSci network leadership. Include: top policy developments, K-12 tool trends, workforce forecast, 3 strategic implications for our AI transformation roadmap. Format as an executive brief."
+};
+
+function copyPrompt(type) {
+  const prompt = PROMPTS[type] || '';
+  navigator.clipboard.writeText(prompt).then(() => {
+    const el = document.getElementById('copy-confirm');
+    el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 3000);
+  });
+}
+
+function copyArticlePrompt(type) {
+  if (!selectedArticle) return;
+  const a = selectedArticle;
+  const prompts = {
+    linkedin: `Write a LinkedIn post based on this article: "${a.title}" — ${a.summary}. Use Mustafa's Writing DNA — Gladwell structure, human/data hook, 150–200 words. Branded footer: New Era Talent Development. AI Powered. Human Driven.`,
+    infographic: `Create infographic copy from this article: "${a.title}". Format: bold headline, 3 bullet insights (one sentence each), 1 key data point, CTA. Brand: Nexera / New Era. Navy, teal, gold.`,
+    pd: `Turn this article into a PD micro-module for BuffSci/RocSci teachers: "${a.title}" — ${a.summary}. Include: learning objective, 2-minute summary, 1 reflection question, 1 classroom application. Map to the Four Teacher Archetypes framework.`,
+    trend: `Add this article to a running leadership trend report for BuffSci/RocSci: "${a.title}". Format as a 3-sentence strategic insight with 1 implication for our AI transformation roadmap.`
+  };
+  const prompt = prompts[type] || '';
+  navigator.clipboard.writeText(prompt).then(() => {
+    document.getElementById('output-preview').textContent = '✓ Prompt copied! Paste into Claude chat to generate.';
+    document.getElementById('output-preview').style.color = '#3B6D11';
+    document.getElementById('output-preview').style.fontStyle = 'normal';
+    const el = document.getElementById('article-copy-confirm');
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display='none'; document.getElementById('output-preview').style.color='#999'; document.getElementById('output-preview').style.fontStyle='italic'; document.getElementById('output-preview').textContent='Select an article then choose an output type above. Prompt copies to clipboard — paste into Claude.'; }, 3000);
+  });
+}
+
+// Init
+loadCSV();
+</script>
+</body>
+</html>
